@@ -105,8 +105,20 @@ const emitNotification = ({ title, message, level }) => {
     timestamp: new Date().toISOString(),
   };
   io.emit("notification", notification);
+  logEvent({ type: "notification", payload: notification });
   return notification;
 };
+
+// Simple simulation log buffer (keeps most recent 200 events)
+const simulationLogs = [];
+const pushLog = (entry) => {
+  const item = { id: randomUUID(), timestamp: new Date().toISOString(), ...entry };
+  simulationLogs.unshift(item);
+  if (simulationLogs.length > 200) simulationLogs.pop();
+  io.emit("simulation_log", item);
+};
+
+const logEvent = (entry) => pushLog(entry);
 
 const assignTasks = () => {
   if (!isRunning) return;
@@ -129,36 +141,51 @@ const assignTasks = () => {
   }
 };
 
-setInterval(() => {
-  if (isRunning) {
-    assignTasks();
-  }
-}, 2000);
+let assignIntervalMs = 2000;
+let progressIntervalMs = 3000;
+let assignTimer = null;
+let progressTimer = null;
 
-setInterval(() => {
-  if (isRunning) {
-    tasks.forEach((task) => {
-      if (task.status === "running") {
-        task.remainingTime = Math.max(0, task.remainingTime - 5);
-        if (task.remainingTime === 0) {
-          task.status = "completed";
-          const processor = processors.find((p) => p.id === task.assignedProcessor);
-          if (processor) {
-            processor.utilization = Math.max(0, processor.utilization - task.cpuRequirement);
-            emitUpdate("processor_updated", processor);
-          }
-          emitUpdate("task_updated", task);
-          emitUpdate("analytics_updated", { data: getAnalytics() });
-          emitNotification({
-            title: "Task completed",
-            message: `${task.taskName} has finished execution.`,
-            level: "success",
-          });
+const startAssignTimer = () => {
+  if (assignTimer) clearInterval(assignTimer);
+  assignTimer = setInterval(() => {
+    if (isRunning) assignTasks();
+  }, assignIntervalMs);
+};
+
+const startProgressTimer = () => {
+  if (progressTimer) clearInterval(progressTimer);
+  progressTimer = setInterval(() => {
+    if (isRunning) runProgressTick();
+  }, progressIntervalMs);
+};
+
+const runProgressTick = () => {
+  tasks.forEach((task) => {
+    if (task.status === "running") {
+      task.remainingTime = Math.max(0, task.remainingTime - 5);
+      if (task.remainingTime === 0) {
+        task.status = "completed";
+        const processor = processors.find((p) => p.id === task.assignedProcessor);
+        if (processor) {
+          processor.utilization = Math.max(0, processor.utilization - task.cpuRequirement);
+          emitUpdate("processor_updated", processor);
         }
+        emitUpdate("task_updated", task);
+        emitUpdate("analytics_updated", { data: getAnalytics() });
+        emitNotification({
+          title: "Task completed",
+          message: `${task.taskName} has finished execution.`,
+          level: "success",
+        });
+        logEvent({ type: "task_completed", task });
       }
-    });
-  }
-}, 3000);
+    }
+  });
+};
+
+startAssignTimer();
+startProgressTimer();
 
 app.get("/analytics/dashboard", (req, res) => {
   res.json({ data: getAnalytics() });
@@ -199,6 +226,67 @@ app.post("/tasks", (req, res) => {
     level: "info",
   });
   res.json({ data: newTask });
+});
+
+// Manual allocation and cancellation endpoints
+app.post("/tasks/allocate", (req, res) => {
+  const { taskId, processorId } = req.body;
+  const task = tasks.find((t) => t.id === taskId);
+  const processor = processors.find((p) => p.id === processorId);
+  if (!task || !processor) return res.status(404).json({ error: "Task or processor not found" });
+  if (task.status !== "waiting") return res.status(400).json({ error: "Task not in waiting state" });
+
+  task.status = "running";
+  task.assignedProcessor = processorId;
+  processor.utilization = Math.min(100, (processor.utilization || 0) + task.cpuRequirement);
+  emitUpdate("allocation_created", { taskId: task.id, processorId: processor.id });
+  emitUpdate("task_updated", task);
+  emitUpdate("processor_updated", processor);
+  emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({ title: "Task manually allocated", message: `${task.taskName} -> ${processor.processorName}`, level: "info" });
+  logEvent({ type: "manual_allocation", taskId: task.id, processorId: processor.id });
+  res.json({ data: { task, processor } });
+});
+
+app.post("/tasks/cancel", (req, res) => {
+  const { taskId } = req.body;
+  const idx = tasks.findIndex((t) => t.id === taskId);
+  if (idx === -1) return res.status(404).json({ error: "Task not found" });
+  const [removed] = tasks.splice(idx, 1);
+  emitUpdate("task_deleted", { id: taskId });
+  emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({ title: "Task cancelled", message: `${removed.taskName} removed from queue.`, level: "warning" });
+  logEvent({ type: "task_cancelled", task: removed });
+  res.json({ data: removed });
+});
+
+// Simulation control: step once or change speed
+app.post("/simulation/step", (req, res) => {
+  // Run one assign pass and one progress tick
+  assignTasks();
+  runProgressTick();
+  emitUpdate("analytics_updated", { data: getAnalytics() });
+  res.json({ data: { stepped: true } });
+});
+
+app.post("/simulation/speed", (req, res) => {
+  const { speed } = req.body; // multiplier, e.g., 2 = twice as fast
+  const factor = Number(speed) || 1;
+  assignIntervalMs = Math.max(200, Math.round(2000 / factor));
+  progressIntervalMs = Math.max(200, Math.round(3000 / factor));
+  startAssignTimer();
+  startProgressTimer();
+  logEvent({ type: "simulation_speed", speed: factor });
+  res.json({ data: { assignIntervalMs, progressIntervalMs } });
+});
+
+app.get("/simulation/logs", (req, res) => {
+  res.json({ data: simulationLogs });
+});
+
+app.post("/simulation/logs/clear", (req, res) => {
+  simulationLogs.length = 0;
+  res.json({ data: { cleared: true } });
 });
 
 app.post("/simulation/start", (req, res) => {

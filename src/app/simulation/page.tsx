@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { NotificationPanel, type NotificationItem } from "@/components/ui/NotificationPanel";
+import { SimulationGantt } from "@/components/ui/SimulationGantt";
 import { Play, Pause, RotateCcw, Plus, Cpu, Server } from "lucide-react";
 import { api, getSocket } from "@/lib/api";
 
@@ -42,6 +43,8 @@ export default function SimulationPage() {
   const [tasks, setTasks] = useState<SimulationTask[]>([]);
   const [nodes, setNodes] = useState<ProcessorNode[]>(initialNodes);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [simulationSpeed, setSimulationSpeed] = useState<number>(1);
+  const [logs, setLogs] = useState<any[]>([]);
 
   const pushNotification = (notification: Omit<NotificationItem, "id" | "timestamp">) => {
     setNotifications((prev) => [
@@ -102,6 +105,9 @@ export default function SimulationPage() {
             return [...prev, data];
          });
       });
+      socket.on("simulation_log", (entry: any) => {
+        setLogs((prev) => [entry, ...prev].slice(0, 200));
+      });
       socket.on("notification", (notification: NotificationItem) => {
          pushNotification(notification);
       });
@@ -117,6 +123,7 @@ export default function SimulationPage() {
         socket.off("task_deleted");
         socket.off("allocation_created");
         socket.off("processor_updated");
+        socket.off("simulation_log");
         socket.off("notification");
         socket.off("analytics_updated");
       }
@@ -190,6 +197,68 @@ export default function SimulationPage() {
     }
   };
 
+  const setSpeed = async (multiplier: number) => {
+    setSimulationSpeed(multiplier);
+    try {
+      await api.post("/simulation/speed", { speed: multiplier });
+      pushNotification({ title: "Simulation speed", message: `Set to ${multiplier}x`, level: "info" });
+    } catch (err) {
+      console.error("Failed to set speed", err);
+    }
+  };
+
+  const stepSimulation = async () => {
+    try {
+      await api.post("/simulation/step", {});
+      pushNotification({ title: "Simulation step", message: "Advanced one tick.", level: "info" });
+      // fetch latest quick snapshot
+      const t = await api.get<SimulationTask[]>('/tasks');
+      const p = await api.get<ProcessorNode[]>('/processors');
+      if (t.data) setTasks(t.data);
+      if (p.data) setNodes(p.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchLogs = async () => {
+    try {
+      const res = await api.get<any[]>('/simulation/logs');
+      if (res.data) setLogs(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch logs', err);
+    }
+  };
+
+  const exportLogsCsv = () => {
+    if (!logs || logs.length === 0) return;
+    const headers = ['timestamp','type','payload'];
+    const rows = logs.map(l => [l.timestamp, l.type || '', JSON.stringify(l.payload || l)]);
+    const escapeCell = (v: string) => `"${v.replaceAll('"','""')}"`;
+    const csv = [headers, ...rows].map(r => r.map(c => escapeCell(String(c))).join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `simulation-logs-${new Date().toISOString().slice(0,10)}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
+  const allocateTask = async (taskId: string, processorId: string) => {
+    try {
+      await api.post('/tasks/allocate', { taskId, processorId });
+      await fetchLogs();
+    } catch (err) {
+      console.error('Allocate failed', err);
+    }
+  };
+
+  const cancelTask = async (taskId: string) => {
+    try {
+      await api.post('/tasks/cancel', { taskId });
+      await fetchLogs();
+    } catch (err) {
+      console.error('Cancel failed', err);
+    }
+  };
+
   return (
     <div className="min-h-screen py-20 px-4 md:px-6">
       <div className="container mx-auto max-w-7xl">
@@ -205,6 +274,20 @@ export default function SimulationPage() {
           onDismiss={handleDismissNotification}
           onClear={handleClearNotifications}
         />
+
+        <div className="mb-6 flex items-center gap-3">
+          <div className="text-sm text-gray-400">Speed:</div>
+          <div className="inline-flex items-center gap-2">
+            {[0.5,1,2,4].map((s) => (
+              <button key={String(s)} onClick={() => setSpeed(s)} className={`px-3 py-1 rounded-full ${simulationSpeed===s? 'bg-brand-neon text-black' : 'bg-white/5 text-white'}`}>
+                {s}x
+              </button>
+            ))}
+          </div>
+          <button onClick={stepSimulation} className="ml-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm">Step</button>
+          <button onClick={fetchLogs} className="ml-auto inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm">Refresh Logs</button>
+          <button onClick={exportLogsCsv} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-brand-neon px-3 py-1 text-sm text-black">Export Logs</button>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Controls & Input */}
@@ -306,6 +389,41 @@ export default function SimulationPage() {
                    <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-brand-neon/5" />
                 </div>
               )}
+
+              <div className="mt-6 w-full z-10 relative">
+                <hr className="border-white/10 mb-4" />
+                <h4 className="text-lg font-bold mb-2">Timeline</h4>
+                <SimulationGantt tasks={tasks} />
+
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <h5 className="text-sm font-semibold mb-2">Waiting Tasks</h5>
+                    <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                      {tasks.filter(t => t.status === 'waiting').map(t => (
+                        <div key={t.id} className="flex justify-between items-center p-2 rounded bg-white/5 border border-white/10">
+                          <div className="flex flex-col">
+                            <span className="font-mono text-xs text-brand-neon">{t.taskName}</span>
+                            <span className="text-xs text-gray-400">{t.cpuRequirement}% • {t.executionTime}ms</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button onClick={() => allocateTask(t.id, nodes[0]?.id ?? '1')} className="px-2 py-1 text-xs rounded bg-brand-neon text-black">Alloc→N1</button>
+                            <button onClick={() => cancelTask(t.id)} className="px-2 py-1 text-xs rounded border border-white/10">Cancel</button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h5 className="text-sm font-semibold mb-2">Recent Logs</h5>
+                    <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 text-xs text-gray-300 custom-scrollbar">
+                      {logs.slice(0,50).map((l, idx) => (
+                        <div key={idx} className="p-2 rounded bg-black/30 border border-white/5">{l.timestamp} — {l.type || ''} — {JSON.stringify(l.payload || l.message || l)}</div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </GlassCard>
           </div>
         </div>

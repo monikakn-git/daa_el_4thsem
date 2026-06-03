@@ -21,7 +21,10 @@ type ApiResponse<T> = {
 export const api = {
   get: async <T = unknown>(endpoint: string): Promise<ApiResponse<T>> => {
     const res = await fetch(`${API_URL}${endpoint}`);
-    if (!res.ok) throw new Error("Failed to fetch");
+    if (!res.ok) {
+      const message = await res.text().catch(() => res.statusText);
+      throw new Error(`Failed to fetch ${endpoint}: ${res.status} ${message}`);
+    }
     return res.json() as Promise<ApiResponse<T>>;
   },
   post: async <T = unknown>(endpoint: string, data: unknown): Promise<ApiResponse<T>> => {
@@ -30,7 +33,10 @@ export const api = {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error("Failed to post");
+    if (!res.ok) {
+      const message = await res.text().catch(() => res.statusText);
+      throw new Error(`Failed to post ${endpoint}: ${res.status} ${message}`);
+    }
     return res.json() as Promise<ApiResponse<T>>;
   },
 };
