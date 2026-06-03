@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { api } from "@/lib/api";
-import { RefreshCw, Database } from "lucide-react";
+import { isAuthenticated, logout } from "@/lib/auth";
+import { RefreshCw, Database, LogOut } from "lucide-react";
 
 type Contact = {
   id: string;
@@ -16,9 +18,21 @@ type Contact = {
 };
 
 export default function AdminPage() {
+  const router = useRouter();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      router.replace("/login");
+    }
+  }, [router]);
+
+  const handleLogout = () => {
+    logout();
+    router.replace("/login");
+  };
 
   const fetchContacts = async () => {
     setLoading(true);
@@ -33,7 +47,33 @@ export default function AdminPage() {
       setLoading(false);
     }
   };
+  const exportContactsToCsv = () => {
+    if (contacts.length === 0) return;
 
+    const headers = ["Name", "Email", "Subject", "Message", "Received At"];
+    const rows = contacts.map((contact) => [
+      contact.name,
+      contact.email,
+      contact.subject,
+      contact.message,
+      new Date(contact.receivedAt).toISOString(),
+    ]);
+
+    const escapeCell = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const csvContent = [headers, ...rows]
+      .map((row) => row.map((cell) => escapeCell(cell)).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `contacts-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
   useEffect(() => {
     let active = true;
 
@@ -71,9 +111,26 @@ export default function AdminPage() {
             <h1 className="text-4xl md:text-5xl font-bold mb-2">Admin <span className="text-gradient">Contacts</span></h1>
             <p className="text-gray-400 max-w-2xl">View stored contact submissions and verify that the backend persists messages to SQLite.</p>
           </div>
-          <button onClick={fetchContacts} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-brand-neon hover:text-brand-neon">
-            <RefreshCw className="w-4 h-4" /> Refresh
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button onClick={fetchContacts} className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-brand-neon hover:text-brand-neon">
+              <RefreshCw className="w-4 h-4" /> Refresh
+            </button>
+            <button
+              type="button"
+              onClick={exportContactsToCsv}
+              disabled={contacts.length === 0}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-brand-neon px-4 py-2 text-sm font-medium text-black transition hover:bg-brand-neon/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:border-red-400 hover:text-red-400"
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
+          </div>
         </motion.div>
 
         <div className="grid gap-6">

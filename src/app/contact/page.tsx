@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { Send, Mail, MapPin, Phone } from "lucide-react";
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import { api } from "@/lib/api";
 
 export default function ContactPage() {
@@ -14,7 +14,7 @@ export default function ContactPage() {
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState<null | "idle" | "sending" | "sent" | "error">("idle");
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus("sending");
     try {

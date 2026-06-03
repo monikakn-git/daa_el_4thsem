@@ -33,6 +33,7 @@ export default function DVFSPage() {
   const [power, setPower] = useState(85);
   const [temp, setTemp] = useState(45);
   const [processorId, setProcessorId] = useState<string | null>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
   const [history, setHistory] = useState<DVFSHistoryPoint[]>(initialHistory);
 
   useEffect(() => {
@@ -108,6 +109,37 @@ export default function DVFSPage() {
   const handleVoltageChange = (e: ChangeEvent<HTMLInputElement>) => setVoltage(parseFloat(e.target.value));
   const handleFrequencyChange = (e: ChangeEvent<HTMLInputElement>) => setFrequency(parseFloat(e.target.value));
 
+  const handleAutoOptimize = async () => {
+    if (!processorId) return;
+    setIsOptimizing(true);
+
+    try {
+      const response = await api.post<{ processor: ProcessorNode; recommended: { voltage: number; frequency: number; temperature: number; powerConsumption: number } }>("/dvfs/optimize", {
+        processorId,
+      });
+
+      if (response.data.processor) {
+        setVoltage(response.data.processor.voltage ?? voltage);
+        setFrequency(response.data.processor.frequency ?? frequency);
+        setTemp(response.data.processor.temperature ?? temp);
+        setPower(response.data.recommended.powerConsumption ?? power);
+
+        setHistory((prev) => {
+          const next = [...prev.slice(1), {
+            time: new Date().toLocaleTimeString([], { minute: '2-digit', second: '2-digit' }),
+            power: response.data.recommended.powerConsumption,
+            temp: response.data.recommended.temperature,
+          }];
+          return next;
+        });
+      }
+    } catch (error) {
+      console.error("Auto-optimization failed", error);
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen py-20 px-4 md:px-6">
       <div className="container mx-auto max-w-7xl">
@@ -158,6 +190,15 @@ export default function DVFSPage() {
                     <span>5.0 GHz</span>
                   </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleAutoOptimize}
+                  disabled={isOptimizing || !processorId}
+                  className="w-full rounded-full border border-white/10 bg-brand-neon px-4 py-3 text-sm font-semibold text-black transition hover:bg-brand-neon/90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isOptimizing ? "Auto-optimizing…" : "Auto Optimize"}
+                </button>
               </div>
             </GlassCard>
 

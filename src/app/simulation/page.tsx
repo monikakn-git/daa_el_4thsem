@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type SVGProps } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
+import { NotificationPanel, type NotificationItem } from "@/components/ui/NotificationPanel";
 import { Play, Pause, RotateCcw, Plus, Cpu, Server } from "lucide-react";
 import { api, getSocket } from "@/lib/api";
 
@@ -40,6 +41,26 @@ export default function SimulationPage() {
   const [isRunning, setIsRunning] = useState(false);
   const [tasks, setTasks] = useState<SimulationTask[]>([]);
   const [nodes, setNodes] = useState<ProcessorNode[]>(initialNodes);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+
+  const pushNotification = (notification: Omit<NotificationItem, "id" | "timestamp">) => {
+    setNotifications((prev) => [
+      {
+        id: `notification-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        timestamp: new Date().toISOString(),
+        ...notification,
+      },
+      ...prev,
+    ].slice(0, 6));
+  };
+
+  const handleDismissNotification = (id: string) => {
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+  };
 
   // Form states
   const [priority, setPriority] = useState("Medium");
@@ -81,6 +102,9 @@ export default function SimulationPage() {
             return [...prev, data];
          });
       });
+      socket.on("notification", (notification: NotificationItem) => {
+         pushNotification(notification);
+      });
       socket.on("analytics_updated", () => {
          // Optionally refresh data if needed
       });
@@ -93,6 +117,7 @@ export default function SimulationPage() {
         socket.off("task_deleted");
         socket.off("allocation_created");
         socket.off("processor_updated");
+        socket.off("notification");
         socket.off("analytics_updated");
       }
     };
@@ -102,6 +127,11 @@ export default function SimulationPage() {
     try {
       await api.post("/simulation/start", {});
       setIsRunning(true);
+      pushNotification({
+        title: "Simulation started",
+        message: "Real-time scheduling has begun.",
+        level: "info",
+      });
     } catch (e) {
       console.error(e);
     }
@@ -111,6 +141,11 @@ export default function SimulationPage() {
     try {
       await api.post("/simulation/pause", {});
       setIsRunning(false);
+      pushNotification({
+        title: "Simulation paused",
+        message: "Processing has been paused.",
+        level: "warning",
+      });
     } catch (e) {
       console.error(e);
     }
@@ -123,6 +158,11 @@ export default function SimulationPage() {
       setTasks([]);
       // Reset local nodes visual to 0 if they were mock
       setNodes(prev => prev.map(n => ({...n, utilization: 0, load: 0})));
+      pushNotification({
+        title: "Simulation reset",
+        message: "All task and processor metrics have been cleared.",
+        level: "warning",
+      });
     } catch (e) {
       console.error(e);
     }
@@ -131,13 +171,19 @@ export default function SimulationPage() {
   const handleAddTask = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
+      const taskName = "Task_" + Math.floor(Math.random() * 1000);
       await api.post("/tasks", {
-        taskName: "Task_" + Math.floor(Math.random() * 1000),
+        taskName,
         priority,
         executionTime: execTime,
         deadline: execTime * 2,
         cpuRequirement: cpuReq,
         memoryRequirement: 100,
+      });
+      pushNotification({
+        title: "Task queued",
+        message: `${taskName} has been added to the waiting queue.`,
+        level: "success",
       });
     } catch (e) {
       console.error(e);
@@ -153,6 +199,12 @@ export default function SimulationPage() {
           </h1>
           <p className="text-gray-400">Interactive sandbox for task scheduling and resource allocation.</p>
         </motion.div>
+
+        <NotificationPanel
+          notifications={notifications}
+          onDismiss={handleDismissNotification}
+          onClear={handleClearNotifications}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Controls & Input */}

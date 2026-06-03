@@ -34,6 +34,7 @@ Data is persisted to `data/app.db` so contact records survive backend restarts d
 
 Admin page
 - Visit `/admin` to see stored contact submissions and verify persistence.
+- Use the demo admin login at `/login` with credentials `admin / admin123`.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

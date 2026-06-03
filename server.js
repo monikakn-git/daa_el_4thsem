@@ -96,6 +96,18 @@ const emitUpdate = (event, payload) => {
   io.emit(event, payload);
 };
 
+const emitNotification = ({ title, message, level }) => {
+  const notification = {
+    id: randomUUID(),
+    title,
+    message,
+    level,
+    timestamp: new Date().toISOString(),
+  };
+  io.emit("notification", notification);
+  return notification;
+};
+
 const assignTasks = () => {
   if (!isRunning) return;
 
@@ -109,6 +121,11 @@ const assignTasks = () => {
     emitUpdate("task_updated", waitingTask);
     emitUpdate("processor_updated", availableProcessor);
     emitUpdate("analytics_updated", { data: getAnalytics() });
+    emitNotification({
+      title: "Task dispatched",
+      message: `${waitingTask.taskName} is now running on ${availableProcessor.processorName || availableProcessor.id}.`,
+      level: "success",
+    });
   }
 };
 
@@ -132,6 +149,11 @@ setInterval(() => {
           }
           emitUpdate("task_updated", task);
           emitUpdate("analytics_updated", { data: getAnalytics() });
+          emitNotification({
+            title: "Task completed",
+            message: `${task.taskName} has finished execution.`,
+            level: "success",
+          });
         }
       }
     });
@@ -171,17 +193,32 @@ app.post("/tasks", (req, res) => {
   tasks.unshift(newTask);
   emitUpdate("task_created", newTask);
   emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({
+    title: "New task queued",
+    message: `${newTask.taskName} has been added to the scheduler queue.`,
+    level: "info",
+  });
   res.json({ data: newTask });
 });
 
 app.post("/simulation/start", (req, res) => {
   isRunning = true;
   emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({
+    title: "Simulation started",
+    message: "The scheduler is now processing tasks.",
+    level: "info",
+  });
   res.json({ data: { started: true } });
 });
 
 app.post("/simulation/pause", (req, res) => {
   isRunning = false;
+  emitNotification({
+    title: "Simulation paused",
+    message: "Task processing has been paused.",
+    level: "warning",
+  });
   res.json({ data: { paused: true } });
 });
 
@@ -190,6 +227,11 @@ app.post("/simulation/reset", (req, res) => {
   tasks = [];
   processors = processors.map((processor) => ({ ...processor, utilization: 0 }));
   emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({
+    title: "Simulation reset",
+    message: "The task and processor state has been cleared.",
+    level: "warning",
+  });
   res.json({ data: { reset: true } });
 });
 
@@ -203,7 +245,46 @@ app.post("/dvfs/update", (req, res) => {
   emitUpdate("dvfs_updated", { processor, powerConsumption: processor.voltage * processor.voltage * processor.frequency * 5 });
   emitUpdate("processor_updated", processor);
   emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({
+    title: "DVFS updated",
+    message: `${processor.processorName || processor.id} adjusted to ${processor.voltage.toFixed(2)} V and ${processor.frequency.toFixed(1)} GHz.`,
+    level: "info",
+  });
   res.json({ data: processor });
+});
+
+app.post("/dvfs/optimize", (req, res) => {
+  const { processorId } = req.body;
+  const processor = processors.find((p) => p.id === processorId);
+  if (!processor) return res.status(404).json({ error: "Processor not found" });
+
+  const loadRatio = Math.min(1, Math.max(0, (processor.utilization ?? 0) / 100));
+  const targetFrequency = loadRatio >= 0.8
+    ? Math.min(5.0, processor.frequency + 0.4)
+    : loadRatio <= 0.3
+      ? Math.max(1.2, processor.frequency - 0.5)
+      : 2.2 + loadRatio * 2.0;
+  const targetVoltage = loadRatio >= 0.8
+    ? Math.min(1.5, processor.voltage + 0.05)
+    : loadRatio <= 0.3
+      ? Math.max(0.85, processor.voltage - 0.05)
+      : 1.0 + loadRatio * 0.12;
+
+  processor.frequency = Number(targetFrequency.toFixed(2));
+  processor.voltage = Number(targetVoltage.toFixed(2));
+  processor.temperature = Math.max(30, Math.min(95, 30 + processor.frequency * 6 + loadRatio * 10));
+
+  const powerConsumption = processor.voltage * processor.voltage * processor.frequency * 5;
+  emitUpdate("dvfs_updated", { processor, powerConsumption });
+  emitUpdate("processor_updated", processor);
+  emitUpdate("analytics_updated", { data: getAnalytics() });
+  emitNotification({
+    title: "DVFS auto-optimized",
+    message: `${processor.processorName || processor.id} tuned to ${processor.voltage.toFixed(2)} V and ${processor.frequency.toFixed(1)} GHz based on current load.`, 
+    level: "success",
+  });
+
+  res.json({ data: { processor, recommended: { voltage: processor.voltage, frequency: processor.frequency, temperature: processor.temperature, powerConsumption } } });
 });
 
 app.post("/contact", (req, res) => {
