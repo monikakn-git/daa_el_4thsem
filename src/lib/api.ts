@@ -1,6 +1,9 @@
 import { io, Socket } from "socket.io-client";
 
-const API_URL = "http://localhost:5000";
+const API_PORT = process.env.NEXT_PUBLIC_API_PORT || "5000";
+const API_URL = typeof window !== "undefined"
+  ? `${window.location.protocol}//${window.location.hostname}:${API_PORT}`
+  : `http://localhost:${API_PORT}`;
 
 let socket: Socket | null = null;
 

@@ -87,15 +87,85 @@ export default function DocumentationPage() {
                     <p className="text-gray-300 leading-relaxed mb-4">
                       Modern data centers consume vast amounts of electricity. A significant portion of this energy is wasted due to inefficient task scheduling, idle processor time, and static voltage/frequency configurations that do not adapt to real-time workload demands.
                     </p>
+                    <p className="text-gray-300 leading-relaxed mb-4">
+                      EERAS addresses the challenge of optimizing compute resources in high-performance cloud environments, where both energy efficiency and deadline compliance are critical. The system must balance the competing goals of maximizing throughput, reducing power draw, and ensuring that urgent tasks complete on time.
+                    </p>
+                    <ul className="list-disc pl-6 text-gray-300 space-y-2">
+                      <li>High variability in workload intensity and resource demand.</li>
+                      <li>Need for dynamic adaptation of processor voltage/frequency.</li>
+                      <li>Complex trade-offs between speed, energy, and reliability.</li>
+                      <li>Limited observability into real-time task execution and queue state.</li>
+                    </ul>
                   </div>
                 )}
-                
-                {/* Fallback for other sections */}
-                {!["intro", "problem"].includes(activeSection) && (
-                   <div>
-                      <h2 className="text-3xl font-bold mb-6">{sections.find(s => s.id === activeSection)?.title}</h2>
-                      <p className="text-gray-400 italic">Content for this section is currently being updated by the engineering team.</p>
-                   </div>
+
+                {activeSection === "objectives" && (
+                  <div>
+                    <h2 className="text-3xl font-bold mb-6">Objectives</h2>
+                    <p className="text-gray-300 leading-relaxed mb-4">
+                      EERAS is designed to achieve measurable improvement in resource utilization while minimizing energy consumption. The platform helps operations teams deliver faster completion times and better quality-of-service across mixed workload environments.
+                    </p>
+                    <ul className="list-disc pl-6 text-gray-300 space-y-2 mb-4">
+                      <li>Reduce overall energy use through intelligent task placement and DVFS control.</li>
+                      <li>Maintain high throughput and satisfy strict task deadlines.</li>
+                      <li>Provide transparent monitoring of processor utilization and task progress.</li>
+                      <li>Enable flexible and adaptive scheduling policies for heterogeneous hardware.</li>
+                    </ul>
+                    <p className="text-gray-300 leading-relaxed">
+                      The system is built to support both reactive scheduling and predictive optimization, so it can respond quickly to bursts of demand while preserving long-term efficiency gains.
+                    </p>
+                  </div>
+                )}
+
+                {activeSection === "algorithms" && (
+                  <div>
+                    <h2 className="text-3xl font-bold mb-6">Algorithms</h2>
+                    <p className="text-gray-300 leading-relaxed mb-4">
+                      EERAS combines multiple algorithmic strategies to optimize task scheduling across available processors. Each strategy is chosen to provide a balance between speed, energy efficiency, and task fairness.
+                    </p>
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      <div>
+                        <h3 className="text-xl font-semibold mb-3">Greedy Assignment</h3>
+                        <p className="text-gray-300 leading-relaxed mb-3">
+                          Greedy scheduling assigns tasks to the first available processor that satisfies the workload requirements. It is fast and simple, making it ideal for bursty environments where decisions must be made quickly.
+                        </p>
+                        <ul className="list-disc pl-6 text-gray-300 space-y-2">
+                          <li>Quick task placement.</li>
+                          <li>Low computational overhead.</li>
+                          <li>Best for high-priority short workloads.</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold mb-3">Optimization Engine</h3>
+                        <p className="text-gray-300 leading-relaxed mb-3">
+                          The optimization engine evaluates multiple scheduling scenarios to minimize energy consumption while meeting deadlines. It uses a model-driven search over processor states and task priorities.
+                        </p>
+                        <ul className="list-disc pl-6 text-gray-300 space-y-2">
+                          <li>Prioritizes energy-efficient assignments.</li>
+                          <li>Considers deadline constraints and utilization.</li>
+                          <li>Adapts to changing workload conditions.</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeSection === "dvfs" && (
+                  <div>
+                    <h2 className="text-3xl font-bold mb-6">DVFS Model</h2>
+                    <p className="text-gray-300 leading-relaxed mb-4">
+                      Dynamic Voltage and Frequency Scaling (DVFS) enables EERAS to adjust processor power states in real time. By scaling voltage and frequency up or down, the system can reduce energy use during low-load periods and boost performance when needed.
+                    </p>
+                    <p className="text-gray-300 leading-relaxed mb-4">
+                      The DVFS model in EERAS uses processor telemetry and task demand estimates to select safe operating points. This allows it to balance heat, power, and execution speed without violating reliability constraints.
+                    </p>
+                    <ul className="list-disc pl-6 text-gray-300 space-y-2">
+                      <li>Monitors processor utilization and temperature.</li>
+                      <li>Adjusts frequency to match workload intensity.</li>
+                      <li>Reduces voltage when tasks are not time-critical.</li>
+                      <li>Maintains stable performance for latency-sensitive jobs.</li>
+                    </ul>
+                  </div>
                 )}
               </motion.div>
             </GlassCard>

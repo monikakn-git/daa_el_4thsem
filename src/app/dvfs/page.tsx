@@ -169,8 +169,8 @@ export default function DVFSPage() {
                 <Activity className="text-brand-cyan" /> Real-time Telemetry
               </h3>
               
-              <div className="flex-grow w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="flex-grow w-full min-h-[320px] min-w-0">
+                <ResponsiveContainer width="100%" height={320}>
                   <LineChart data={history}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                     <XAxis dataKey="time" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />

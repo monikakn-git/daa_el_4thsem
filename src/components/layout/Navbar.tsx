@@ -20,6 +20,7 @@ const navLinks = [
   { name: "Docs", path: "/documentation" },
   { name: "Team", path: "/team" },
   { name: "Contact", path: "/contact" },
+  { name: "Admin", path: "/admin" },
 ];
 
 export function Navbar() {

@@ -45,8 +45,8 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <GlassCard className="h-[400px] flex flex-col">
             <h3 className="text-lg font-semibold mb-6">Workload Trends</h3>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={workloadData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis dataKey="name" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
@@ -61,8 +61,8 @@ export default function AnalyticsPage() {
 
           <GlassCard className="h-[400px] flex flex-col">
             <h3 className="text-lg font-semibold mb-6">Algorithm Radar Analysis</h3>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <RadarChart cx="50%" cy="50%" outerRadius="80%" data={algorithmEfficiency}>
                   <PolarGrid stroke="#ffffff20" />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: '#ffffff50', fontSize: 12 }} />
@@ -79,8 +79,8 @@ export default function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
            <GlassCard className="lg:col-span-1 h-[400px] flex flex-col items-center">
              <h3 className="text-lg font-semibold mb-2 self-start">Resource Distribution</h3>
-             <div className="flex-grow w-full flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
+             <div className="flex-grow w-full flex items-center justify-center min-h-[320px] min-w-0">
+                <ResponsiveContainer width="100%" height={320}>
                   <PieChart>
                     <Pie data={resourceDistribution} cx="50%" cy="50%" innerRadius={80} outerRadius={120} fill="#8884d8" paddingAngle={5} dataKey="value">
                       {resourceDistribution.map((entry, index) => (
@@ -95,8 +95,8 @@ export default function AnalyticsPage() {
 
            <GlassCard className="lg:col-span-2 h-[400px] flex flex-col">
             <h3 className="text-lg font-semibold mb-6">Task Completion & Deadline Success</h3>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={workloadData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis dataKey="name" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />

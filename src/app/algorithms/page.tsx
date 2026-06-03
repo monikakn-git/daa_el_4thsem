@@ -116,8 +116,8 @@ export default function AlgorithmsPage() {
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
           <GlassCard className="h-[400px] flex flex-col">
             <h3 className="text-xl font-bold mb-6 text-center">Metric Comparison Matrix</h3>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" horizontal={false} />
                   <XAxis type="number" stroke="#ffffff50" tickLine={false} axisLine={false} />

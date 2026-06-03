@@ -4,8 +4,32 @@ import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { Send, Mail, MapPin, Phone } from "lucide-react";
+import { useState } from "react";
+import { api } from "@/lib/api";
 
 export default function ContactPage() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<null | "idle" | "sending" | "sent" | "error">("idle");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("sending");
+    try {
+      await api.post("/contact", { name, email, subject, message });
+      setStatus("sent");
+      setName("");
+      setEmail("");
+      setSubject("");
+      setMessage("");
+    } catch (err) {
+      console.error(err);
+      setStatus("error");
+    }
+  };
+
   return (
     <div className="min-h-screen py-20 px-4 md:px-6 relative flex items-center justify-center">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-brand-neon/5 blur-[120px] pointer-events-none rounded-full" />
@@ -59,26 +83,27 @@ export default function ContactPage() {
 
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
             <GlassCard glowColor="neon">
-              <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Full Name</label>
-                  <input type="text" className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="John Doe" />
+                  <input value={name} onChange={(e) => setName(e.target.value)} type="text" className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="John Doe" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Email Address</label>
-                  <input type="email" className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="john@enterprise.com" />
+                  <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="john@enterprise.com" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Subject</label>
-                  <input type="text" className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="Enterprise Licensing" />
+                  <input value={subject} onChange={(e) => setSubject(e.target.value)} type="text" className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="Enterprise Licensing" />
                 </div>
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Message</label>
-                  <textarea rows={4} className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="How can we help you?" />
+                  <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={4} className="w-full bg-black/40 border border-white/10 rounded-lg p-3 text-white outline-none focus:border-brand-neon transition-colors" placeholder="How can we help you?" />
                 </div>
-                
-                <AnimatedButton variant="primary" className="w-full mt-4">
-                  <Send className="w-4 h-4 mr-2" /> Send Message
+                {status === "sent" && <div className="text-sm text-green-400">Message sent — thank you!</div>}
+                {status === "error" && <div className="text-sm text-red-400">Failed to send message. Try again later.</div>}
+                <AnimatedButton type="submit" variant="primary" className="w-full mt-4" disabled={status === "sending"}>
+                  <Send className="w-4 h-4 mr-2" /> {status === "sending" ? "Sending..." : "Send Message"}
                 </AnimatedButton>
               </form>
             </GlassCard>

@@ -67,8 +67,8 @@ export default function PerformancePage() {
           <GlassCard className="h-[450px] flex flex-col">
             <h3 className="text-xl font-bold mb-2">Energy Consumption Over Time</h3>
             <p className="text-gray-400 text-sm mb-6">Lower is better (Joules)</p>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <AreaChart data={performanceTimeline}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis dataKey="time" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
@@ -86,8 +86,8 @@ export default function PerformancePage() {
           <GlassCard className="h-[450px] flex flex-col">
             <h3 className="text-xl font-bold mb-2">Throughput vs Energy Cost</h3>
             <p className="text-gray-400 text-sm mb-6">Efficiency ratio analysis</p>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[320px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <ComposedChart data={efficiencyScore}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis dataKey="name" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />

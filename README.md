@@ -2,17 +2,26 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+First, run the backend server in one terminal:
+
+```bash
+npm run backend
+```
+
+Then run the Next.js development server in another terminal:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
+
+## Contact API
+- POST `/contact` — accept JSON `{ name, email, subject, message }` and stores submissions in a local SQLite database.
+- GET `/contacts` — list stored contact submissions.
+
+Data is persisted to `data/app.db` so contact records survive backend restarts during local development.
+
+Admin page
+- Visit `/admin` to see stored contact submissions and verify persistence.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

@@ -1,11 +1,12 @@
 "use client";
 
-import { HTMLMotionProps, motion } from "framer-motion";
+import { HTMLMotionProps, MotionValue, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-interface GlassCardProps extends HTMLMotionProps<"div"> {
+interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "className" | "children"> {
   className?: string;
   glowColor?: "neon" | "emerald" | "cyan";
+  children?: React.ReactNode;
 }
 
 const glowColors = {
@@ -19,14 +20,14 @@ export function GlassCard({ className, children, glowColor, ...props }: GlassCar
     <motion.div
       whileHover={{ y: -5 }}
       className={cn(
-        "group relative rounded-2xl glass-panel p-6 transition-all duration-300 overflow-hidden",
+        "group relative min-w-0 rounded-2xl glass-panel p-6 transition-all duration-300 overflow-hidden",
         glowColor && glowColors[glowColor],
         className
       )}
       {...props}
     >
       <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-      <div className="relative z-10">{children}</div>
+      <div className="relative z-10">{children as React.ReactNode}</div>
     </motion.div>
   );
 }

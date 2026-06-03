@@ -126,8 +126,8 @@ export default function DashboardPage() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Activity className="w-5 h-5 text-brand-neon" /> Throughput Analysis
             </h3>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[300px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <AreaChart data={performanceData}>
                   <defs>
                     <linearGradient id="colorThroughput" x1="0" y1="0" x2="0" y2="1">
@@ -152,8 +152,8 @@ export default function DashboardPage() {
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Zap className="w-5 h-5 text-brand-emerald" /> Energy Consumption (Watts)
             </h3>
-            <div className="flex-grow w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="flex-grow w-full min-h-[300px] min-w-0">
+              <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={performanceData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />
                   <XAxis dataKey="time" stroke="#ffffff50" fontSize={12} tickLine={false} axisLine={false} />
