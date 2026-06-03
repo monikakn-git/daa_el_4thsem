@@ -7,8 +7,21 @@ import { Zap, Target, CheckCircle2, XCircle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { api, getSocket } from "@/lib/api";
 
+type AlgorithmPerformance = {
+  algorithm: string;
+  energy: number;
+  throughput: number;
+  efficiency: number;
+};
+
+type ComparisonMetric = {
+  metric: string;
+  Greedy: number;
+  Optimization: number;
+};
+
 export default function AlgorithmsPage() {
-  const [comparisonData, setComparisonData] = useState([
+  const [comparisonData, setComparisonData] = useState<ComparisonMetric[]>([
     { metric: "Energy (kWh)", Greedy: 85, Optimization: 40 },
     { metric: "Time (ms)", Greedy: 12, Optimization: 45 },
     { metric: "Throughput", Greedy: 70, Optimization: 95 },
@@ -18,12 +31,12 @@ export default function AlgorithmsPage() {
   useEffect(() => {
     const fetchPerf = async () => {
       try {
-        const perfRes = await api.get("/analytics/performance");
+        const perfRes = await api.get<AlgorithmPerformance[]>("/analytics/performance");
         if (perfRes.data) {
-           const greedy = perfRes.data.find((d:any) => d.algorithm === "Greedy");
-           const opt = perfRes.data.find((d:any) => d.algorithm === "Optimization");
+           const greedy = perfRes.data.find((d) => d.algorithm === "Greedy");
+           const opt = perfRes.data.find((d) => d.algorithm === "Optimization");
            
-           if(greedy && opt) {
+           if (greedy && opt) {
              setComparisonData([
                 { metric: "Energy (kWh)", Greedy: greedy.energy, Optimization: opt.energy },
                 { metric: "Time (ms)", Greedy: 12, Optimization: 45 },
@@ -32,8 +45,8 @@ export default function AlgorithmsPage() {
              ]);
            }
         }
-      } catch (e) {
-        console.error("Failed to load performance data");
+      } catch (error) {
+        console.error("Failed to load performance data", error);
       }
     };
     fetchPerf();

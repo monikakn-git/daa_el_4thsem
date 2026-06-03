@@ -8,6 +8,16 @@ import { AnimatedCounter } from "@/components/home/AnimatedCounter";
 import { useEffect, useState } from "react";
 import { api, getSocket } from "@/lib/api";
 
+type DashboardData = {
+  totalTasks: number;
+  runningTasks: number;
+  completedTasks: number;
+  activeProcessors: number;
+  energySaved: number;
+  throughput: number;
+  cpuUtilization: number;
+};
+
 const performanceData = Array.from({ length: 20 }, (_, i) => ({
   time: `10:${i.toString().padStart(2, '0')}`,
   throughput: 100 + Math.random() * 50,
@@ -26,31 +36,7 @@ export default function DashboardPage() {
     cpuUtilization: 0
   });
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        const res = await api.get("/analytics/dashboard");
-        if (res.data) updateState(res.data);
-      } catch (e) {
-        console.error("Failed to load analytics");
-      }
-    };
-
-    fetchAnalytics();
-
-    const socket = getSocket();
-    if (socket) {
-      socket.on("analytics_updated", (data) => {
-        updateState(data);
-      });
-    }
-
-    return () => {
-      if (socket) socket.off("analytics_updated");
-    };
-  }, []);
-
-  const updateState = (data: any) => {
+  const updateState = (data: DashboardData) => {
     setAnalytics(prev => ({
       ...prev,
       totalTasks: data.totalTasks || 0,
@@ -62,6 +48,30 @@ export default function DashboardPage() {
       efficiencyScore: data.throughput > 0 ? Math.min(100, 80 + (data.throughput / 10)) : 0
     }));
   };
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const res = await api.get<DashboardData>("/analytics/dashboard");
+        if (res.data) updateState(res.data);
+      } catch (error) {
+        console.error("Failed to load analytics", error);
+      }
+    };
+
+    fetchAnalytics();
+
+    const socket = getSocket();
+    if (socket) {
+      socket.on("analytics_updated", (data: DashboardData) => {
+        updateState(data);
+      });
+    }
+
+    return () => {
+      if (socket) socket.off("analytics_updated");
+    };
+  }, []);
 
   const kpiData = [
     { title: "Total Tasks", value: analytics.totalTasks, icon: Activity, color: "text-blue-400" },

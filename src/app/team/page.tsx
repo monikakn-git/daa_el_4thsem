@@ -58,7 +58,13 @@ export default function TeamPage() {
             >
               <GlassCard glowColor={member.glow} className="flex flex-col items-center text-center h-full group">
                 <div className="relative w-32 h-32 rounded-full overflow-hidden mb-6 border-2 border-white/10 group-hover:border-brand-neon transition-colors duration-500">
-                  <img src={member.image} alt={member.name} className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500" />
+                  <Image
+                    src={member.image}
+                    alt={member.name}
+                    fill
+                    className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-500"
+                    sizes="128px"
+                  />
                   <div className="absolute inset-0 bg-brand-neon/20 mix-blend-overlay opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 </div>
                 

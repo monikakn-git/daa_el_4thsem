@@ -1,6 +1,6 @@
-const Database = require("better-sqlite3");
-const { existsSync, mkdirSync } = require("fs");
-const { join } = require("path");
+import Database from "better-sqlite3";
+import { existsSync, mkdirSync } from "fs";
+import { join } from "path";
 
 const dataDir = join(process.cwd(), "data");
 if (!existsSync(dataDir)) {
@@ -23,7 +23,7 @@ db.exec(`
   );
 `);
 
-function saveContact(contact) {
+export function saveContact(contact) {
   const stmt = db.prepare(`
     INSERT INTO contacts (id, name, email, subject, message, receivedAt)
     VALUES (@id, @name, @email, @subject, @message, @receivedAt)
@@ -32,12 +32,7 @@ function saveContact(contact) {
   return contact;
 }
 
-function getContacts() {
+export function getContacts() {
   const stmt = db.prepare(`SELECT * FROM contacts ORDER BY receivedAt DESC`);
   return stmt.all();
 }
-
-module.exports = {
-  saveContact,
-  getContacts,
-};

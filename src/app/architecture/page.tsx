@@ -1,13 +1,29 @@
 "use client";
 
+import type { ComponentType, SVGProps } from "react";
 import { motion } from "framer-motion";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { 
-  ArrowDown, GitCommit, Settings, Cpu, LineChart, Target, 
-  Activity, BarChart3, Database, ShieldCheck, FileInput
+import {
+  GitCommit,
+  Settings,
+  Cpu,
+  Target,
+  Activity,
+  BarChart3,
+  Database,
+  ShieldCheck,
+  FileInput,
 } from "lucide-react";
 
-const flowNodes = [
+type FlowNode = {
+  id: string;
+  label?: string;
+  icon?: ComponentType<SVGProps<SVGSVGElement>>;
+  color?: string;
+  split?: boolean;
+  merge?: boolean;
+};
+
+const flowNodes: FlowNode[] = [
   { id: "input", label: "Task Input", icon: FileInput, color: "text-blue-400" },
   { id: "char", label: "Task Characterization", icon: Database, color: "text-purple-400" },
   { id: "engine", label: "Scheduling Engine", icon: Settings, color: "text-brand-neon" },
@@ -22,7 +38,7 @@ const flowNodes = [
   { id: "analytics", label: "Analytics Dashboard", icon: BarChart3, color: "text-pink-400" },
 ];
 
-function Zap(props: any) {
+function Zap(props: SVGProps<SVGSVGElement>) {
   return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>;
 }
 
@@ -115,7 +131,7 @@ export default function ArchitecturePage() {
   );
 }
 
-function NodeCard({ node }: { node: any }) {
+function NodeCard({ node }: { node: FlowNode }) {
   if (!node || !node.icon) return null;
   const Icon = node.icon;
   return (

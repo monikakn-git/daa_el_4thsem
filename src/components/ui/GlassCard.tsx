@@ -1,6 +1,6 @@
 "use client";
 
-import { HTMLMotionProps, MotionValue, motion } from "framer-motion";
+import { HTMLMotionProps, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "className" | "children"> {

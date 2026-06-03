@@ -1,11 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ChangeEvent } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Cpu, Zap, Thermometer, Activity } from "lucide-react";
 import { api, getSocket } from "@/lib/api";
+
+type DVFSHistoryPoint = {
+  time: string;
+  power: number;
+  temp: number;
+};
+
+type ProcessorNode = {
+  id: string;
+  voltage?: number;
+  frequency?: number;
+  temperature?: number;
+  utilization?: number;
+};
+
+const initialHistory: DVFSHistoryPoint[] = Array.from({ length: 20 }, (_, i) => ({
+  time: `${i}`,
+  power: 85,
+  temp: 45,
+}));
 
 export default function DVFSPage() {
   const [voltage, setVoltage] = useState(1.2);
@@ -13,27 +33,20 @@ export default function DVFSPage() {
   const [power, setPower] = useState(85);
   const [temp, setTemp] = useState(45);
   const [processorId, setProcessorId] = useState<string | null>(null);
-
-  const [history, setHistory] = useState(
-    Array.from({ length: 20 }, (_, i) => ({
-      time: i.toString(),
-      power: 85 + Math.random() * 5 - 2.5,
-      temp: 45 + Math.random() * 2 - 1,
-    }))
-  );
+  const [history, setHistory] = useState<DVFSHistoryPoint[]>(initialHistory);
 
   useEffect(() => {
     // Initial fetch to get a processor to control
     const fetchProcessor = async () => {
       try {
-        const p = await api.get("/processors");
+        const p = await api.get<ProcessorNode[]>("/processors");
         if (p.data && p.data.length > 0) {
           setProcessorId(p.data[0].id);
           setVoltage(p.data[0].voltage || 1.2);
           setFrequency(p.data[0].frequency || 3.5);
         } else {
           // Add a dummy processor if none exists
-          const newP = await api.post("/processors", {
+          const newP = await api.post<ProcessorNode>("/processors", {
             processorName: "Main CPU Node",
             totalCapacity: 100,
             availableCapacity: 100,
@@ -44,8 +57,8 @@ export default function DVFSPage() {
           });
           setProcessorId(newP.data.id);
         }
-      } catch (e) {
-        console.error("Failed to fetch processor");
+      } catch (error) {
+        console.error("Failed to fetch processor", error);
       }
     };
     fetchProcessor();
@@ -72,7 +85,7 @@ export default function DVFSPage() {
     return () => {
       if (socket) socket.off("dvfs_updated");
     };
-  }, [processorId]);
+  }, [processorId, voltage, frequency]);
 
   useEffect(() => {
     // Debounced API call when user changes sliders
@@ -84,16 +97,16 @@ export default function DVFSPage() {
             voltage,
             frequency
           });
-        } catch (e) {
-           console.error("Failed to update DVFS");
+        } catch (error) {
+           console.error("Failed to update DVFS", error);
         }
       }
     }, 500);
     return () => clearTimeout(timeout);
   }, [voltage, frequency, processorId]);
 
-  const handleVoltageChange = (e: any) => setVoltage(parseFloat(e.target.value));
-  const handleFrequencyChange = (e: any) => setFrequency(parseFloat(e.target.value));
+  const handleVoltageChange = (e: ChangeEvent<HTMLInputElement>) => setVoltage(parseFloat(e.target.value));
+  const handleFrequencyChange = (e: ChangeEvent<HTMLInputElement>) => setFrequency(parseFloat(e.target.value));
 
   return (
     <div className="min-h-screen py-20 px-4 md:px-6">

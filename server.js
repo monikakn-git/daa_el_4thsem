@@ -1,9 +1,9 @@
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const cors = require('cors');
-const { randomUUID } = require('crypto');
-const { saveContact, getContacts } = require('./src/lib/db');
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
+import { randomUUID } from "crypto";
+import { saveContact, getContacts } from "./src/lib/db.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -108,35 +108,6 @@ const assignTasks = () => {
     emitUpdate("allocation_created", { taskId: waitingTask.id, processorId: availableProcessor.id });
     emitUpdate("task_updated", waitingTask);
     emitUpdate("processor_updated", availableProcessor);
-    emitUpdate("analytics_updated", { data: getAnalytics() });
-  }
-};
-
-const advanceSimulation = () => {
-  if (!isRunning) return;
-
-  let stateChanged = false;
-  tasks.forEach((task) => {
-    if (task.status === "running") {
-      task.remainingTime = Math.max(0, task.remainingTime - 10);
-      if (task.remainingTime === 0) {
-        task.status = "completed";
-        task.assignedProcessor = null;
-        stateChanged = true;
-      }
-    }
-  });
-
-  if (stateChanged) {
-    tasks.forEach((task) => {
-      if (task.status === "completed" && task.assignedProcessor) {
-        const processor = processors.find((p) => p.id === task.assignedProcessor);
-        if (processor) {
-          processor.utilization = Math.max(0, processor.utilization - task.cpuRequirement);
-          emitUpdate("processor_updated", processor);
-        }
-      }
-    });
     emitUpdate("analytics_updated", { data: getAnalytics() });
   }
 };

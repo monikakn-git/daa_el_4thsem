@@ -1,21 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent, type SVGProps } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
 import { Play, Pause, RotateCcw, Plus, Cpu, Server } from "lucide-react";
 import { api, getSocket } from "@/lib/api";
 
+type SimulationTask = {
+  id: string;
+  taskName: string;
+  priority: string;
+  executionTime: number;
+  deadline: number;
+  cpuRequirement: number;
+  memoryRequirement: number;
+  status: string;
+  assignedProcessor: string | null;
+  remainingTime: number;
+};
+
+type ProcessorNode = {
+  id: string;
+  processorName?: string;
+  load?: number;
+  active?: boolean;
+  utilization?: number;
+  temperature?: number;
+};
+
+const initialNodes: ProcessorNode[] = [
+  { id: "1", load: 0, active: true, utilization: 0 },
+  { id: "2", load: 0, active: true, utilization: 0 },
+  { id: "3", load: 0, active: true, utilization: 0 },
+  { id: "4", load: 0, active: true, utilization: 0 },
+];
+
 export default function SimulationPage() {
   const [isRunning, setIsRunning] = useState(false);
-  const [tasks, setTasks] = useState<any[]>([]);
-  const [nodes, setNodes] = useState<any[]>([
-    { id: "1", load: 0, active: true },
-    { id: "2", load: 0, active: true },
-    { id: "3", load: 0, active: true },
-    { id: "4", load: 0, active: true },
-  ]);
+  const [tasks, setTasks] = useState<SimulationTask[]>([]);
+  const [nodes, setNodes] = useState<ProcessorNode[]>(initialNodes);
 
   // Form states
   const [priority, setPriority] = useState("Medium");
@@ -26,31 +50,31 @@ export default function SimulationPage() {
     // Initial fetch
     const fetchData = async () => {
       try {
-        const t = await api.get("/tasks");
+        const t = await api.get<SimulationTask[]>("/tasks");
         if (t.data) setTasks(t.data);
-        const p = await api.get("/processors");
+        const p = await api.get<ProcessorNode[]>("/processors");
         if (p.data && p.data.length > 0) setNodes(p.data);
-      } catch (e) {
-        console.error("Failed to load initial simulation data", e);
+      } catch (error) {
+        console.error("Failed to load initial simulation data", error);
       }
     };
     fetchData();
 
     const socket = getSocket();
     if (socket) {
-      socket.on("task_created", (t) => {
+      socket.on("task_created", (t: SimulationTask) => {
         setTasks((prev) => [t, ...prev]);
       });
-      socket.on("task_updated", (t) => {
+      socket.on("task_updated", (t: SimulationTask) => {
         setTasks((prev) => prev.map(task => task.id === t.id ? { ...task, ...t } : task));
       });
-      socket.on("task_deleted", (t) => {
+      socket.on("task_deleted", (t: { id: string }) => {
          setTasks((prev) => prev.filter(task => task.id !== t.id));
       });
-      socket.on("allocation_created", (data) => {
+      socket.on("allocation_created", (data: { taskId: string; processorId: string }) => {
          setTasks((prev) => prev.map(task => task.id === data.taskId ? { ...task, assignedProcessor: data.processorId, status: "running" } : task));
       });
-      socket.on("processor_updated", (data) => {
+      socket.on("processor_updated", (data: ProcessorNode) => {
          setNodes((prev) => {
             const exists = prev.find(p => p.id === data.id);
             if (exists) return prev.map(p => p.id === data.id ? { ...p, ...data } : p);
@@ -104,7 +128,7 @@ export default function SimulationPage() {
     }
   };
 
-  const handleAddTask = async (e: React.FormEvent) => {
+  const handleAddTask = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
       await api.post("/tasks", {
@@ -238,7 +262,7 @@ export default function SimulationPage() {
   );
 }
 
-function SettingsIcon(props: any) {
+function SettingsIcon(props: SVGProps<SVGSVGElement>) {
   return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>;
 }
 

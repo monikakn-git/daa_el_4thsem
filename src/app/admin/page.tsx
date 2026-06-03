@@ -4,10 +4,19 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { api } from "@/lib/api";
-import { RefreshCw, Mail, Database } from "lucide-react";
+import { RefreshCw, Database } from "lucide-react";
+
+type Contact = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  receivedAt: string;
+};
 
 export default function AdminPage() {
-  const [contacts, setContacts] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<Contact[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +24,7 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.get("/contacts");
+      const res = await api.get<Contact[]>("/contacts");
       setContacts(res.data || []);
     } catch (err) {
       console.error(err);
@@ -26,7 +35,32 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    fetchContacts();
+    let active = true;
+
+    const load = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await api.get<Contact[]>("/contacts");
+        if (active) {
+          setContacts(res.data || []);
+        }
+      } catch (err) {
+        console.error(err);
+        if (active) {
+          setError("Unable to load contact submissions.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    load();
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (

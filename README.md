@@ -2,16 +2,28 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the backend server in one terminal:
+Run the backend API server in one terminal:
 
 ```bash
 npm run backend
 ```
 
-Then run the Next.js development server in another terminal:
+Run the Next.js development server in another terminal:
 
 ```bash
 npm run dev
+```
+
+Or start both together with:
+
+```bash
+npm run dev:all
+```
+
+If you need to use a different API port, set `NEXT_PUBLIC_API_PORT` before starting the frontend.
+
+```bash
+NEXT_PUBLIC_API_PORT=5000 npm run dev
 ```
 
 ## Contact API

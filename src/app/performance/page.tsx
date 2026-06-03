@@ -6,29 +6,52 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ComposedChart, Bar, Line } from "recharts";
 import { api, getSocket } from "@/lib/api";
 
-export default function PerformancePage() {
-  const [performanceTimeline, setPerformanceTimeline] = useState([
-    { time: '0s', traditional: 100, greedy: 80, opt: 40, hybrid: 45 },
-    { time: '1s', traditional: 120, greedy: 85, opt: 42, hybrid: 48 },
-    { time: '2s', traditional: 140, greedy: 90, opt: 45, hybrid: 42 },
-    { time: '3s', traditional: 160, greedy: 100, opt: 48, hybrid: 40 },
-    { time: '4s', traditional: 180, greedy: 95, opt: 55, hybrid: 45 },
-    { time: '5s', traditional: 200, greedy: 110, opt: 60, hybrid: 50 },
-  ]);
+type AlgorithmPerformance = {
+  algorithm: string;
+  throughput: number;
+  energy: number;
+};
 
-  const [efficiencyScore, setEfficiencyScore] = useState([
-    { name: 'Traditional', throughput: 50, energy: 100 },
-    { name: 'Greedy', throughput: 75, energy: 80 },
-    { name: 'Optimization', throughput: 90, energy: 40 },
-    { name: 'Hybrid', throughput: 95, energy: 45 },
-  ]);
+type PerformancePoint = {
+  time: string;
+  traditional: number;
+  greedy: number;
+  opt: number;
+  hybrid: number;
+};
+
+type EfficiencyScore = {
+  name: string;
+  throughput: number;
+  energy: number;
+};
+
+const initialPerformanceTimeline: PerformancePoint[] = [
+  { time: '0s', traditional: 100, greedy: 80, opt: 40, hybrid: 45 },
+  { time: '1s', traditional: 120, greedy: 85, opt: 42, hybrid: 48 },
+  { time: '2s', traditional: 140, greedy: 90, opt: 45, hybrid: 42 },
+  { time: '3s', traditional: 160, greedy: 100, opt: 48, hybrid: 40 },
+  { time: '4s', traditional: 180, greedy: 95, opt: 55, hybrid: 45 },
+  { time: '5s', traditional: 200, greedy: 110, opt: 60, hybrid: 50 },
+];
+
+const initialEfficiencyScore: EfficiencyScore[] = [
+  { name: 'Traditional', throughput: 50, energy: 100 },
+  { name: 'Greedy', throughput: 75, energy: 80 },
+  { name: 'Optimization', throughput: 90, energy: 40 },
+  { name: 'Hybrid', throughput: 95, energy: 45 },
+];
+
+export default function PerformancePage() {
+  const [performanceTimeline] = useState(initialPerformanceTimeline);
+  const [efficiencyScore, setEfficiencyScore] = useState<EfficiencyScore[]>(initialEfficiencyScore);
 
   useEffect(() => {
     const fetchPerf = async () => {
       try {
-        const perfRes = await api.get("/analytics/performance");
+        const perfRes = await api.get<AlgorithmPerformance[]>("/analytics/performance");
         if (perfRes.data) {
-           const mappedScores = perfRes.data.map((d:any) => ({
+           const mappedScores = perfRes.data.map((d) => ({
               name: d.algorithm,
               throughput: d.throughput,
               energy: d.energy
@@ -38,8 +61,8 @@ export default function PerformancePage() {
               ...mappedScores
            ]);
         }
-      } catch (e) {
-        console.error("Failed to load performance data");
+      } catch (error) {
+        console.error("Failed to load performance data", error);
       }
     };
     fetchPerf();
