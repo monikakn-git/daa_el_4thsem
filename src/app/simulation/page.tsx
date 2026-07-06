@@ -331,7 +331,7 @@ export default function SimulationPage() {
 
             <GlassCard>
               <h3 className="text-xl font-bold mb-4">Task Queue</h3>
-              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+              <div className="space-y-2 max-h-50 overflow-y-auto pr-2 custom-scrollbar">
                 {tasks.filter(t => t.status === "waiting").map(t => (
                   <div key={t.id} className="flex justify-between items-center p-3 rounded-lg bg-white/5 border border-white/10">
                     <span className="font-mono text-brand-neon text-xs">{t.taskName || t.id.slice(0,8)}</span>
@@ -344,10 +344,10 @@ export default function SimulationPage() {
 
           {/* Visualization */}
           <div className="lg:col-span-8">
-            <GlassCard className="h-full min-h-[600px] flex flex-col relative overflow-hidden">
+            <GlassCard className="h-full min-h-150 flex flex-col relative overflow-hidden">
               <h3 className="text-xl font-bold mb-6 flex items-center gap-2 z-10 relative"><Server className="w-5 h-5 text-brand-cyan" /> Cluster Nodes</h3>
               
-              <div className="flex-grow grid grid-cols-2 gap-4 relative z-10">
+              <div className="grow grid grid-cols-2 gap-4 relative z-10">
                 {nodes.map((node, i) => {
                   const displayLoad = node.utilization || node.load || 0;
                   return (
@@ -366,7 +366,7 @@ export default function SimulationPage() {
                       <span className="font-mono text-sm">{Math.round(displayLoad)}% Load</span>
                     </div>
 
-                    <div className="relative z-10 flex-grow border border-dashed border-white/20 rounded-lg p-2 min-h-[100px] flex items-center justify-center flex-wrap gap-2">
+                    <div className="relative z-10 grow border border-dashed border-white/20 rounded-lg p-2 min-h-25 flex items-center justify-center flex-wrap gap-2">
                       {tasks.filter(t => t.assignedProcessor === node.id && t.status === "running").map(t => (
                         <motion.div
                           key={t.id}
@@ -398,7 +398,7 @@ export default function SimulationPage() {
                 <div className="mt-4 grid grid-cols-2 gap-4">
                   <div>
                     <h5 className="text-sm font-semibold mb-2">Waiting Tasks</h5>
-                    <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                       {tasks.filter(t => t.status === 'waiting').map(t => (
                         <div key={t.id} className="flex justify-between items-center p-2 rounded bg-white/5 border border-white/10">
                           <div className="flex flex-col">
@@ -416,7 +416,7 @@ export default function SimulationPage() {
 
                   <div>
                     <h5 className="text-sm font-semibold mb-2">Recent Logs</h5>
-                    <div className="space-y-2 max-h-[160px] overflow-y-auto pr-2 text-xs text-gray-300 custom-scrollbar">
+                    <div className="space-y-2 max-h-40 overflow-y-auto pr-2 text-xs text-gray-300 custom-scrollbar">
                       {logs.slice(0,50).map((l, idx) => (
                         <div key={idx} className="p-2 rounded bg-black/30 border border-white/5">{l.timestamp} — {l.type || ''} — {JSON.stringify(l.payload || l.message || l)}</div>
                       ))}

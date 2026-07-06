@@ -92,6 +92,81 @@ const getPerformanceData = () => [
   { algorithm: "Optimization", energy: 45, throughput: 95, efficiency: 92 },
 ];
 
+// Simulate allocation for comparison between Greedy and a simple Optimization (best-fit decreasing)
+const simulateAllocation = (tasksInput, processorsInput, mode = "greedy") => {
+  // Clone inputs
+  const tasksCopy = tasksInput.map(t => ({ ...t }));
+  const procs = processorsInput.map(p => ({ ...p, available: (p.totalCapacity ?? 100) - (p.utilization ?? 0) }));
+
+  // helper to compute simple energy metric
+  const computeEnergy = (assignments) => {
+    // energy proportional to CPU allocated
+    return Math.round(assignments.reduce((s, a) => s + (a.cpuRequirement || 0) * 0.18, 0) * 10) / 10;
+  };
+
+  // assignments: array of { taskId, processorId, cpuRequirement }
+  const assignments = [];
+
+  if (mode === "greedy") {
+    // assign to first processor that has enough available capacity
+    for (const task of tasksCopy) {
+      const proc = procs.find(p => (p.available ?? 0) >= (task.cpuRequirement ?? 0));
+      if (proc) {
+        proc.available -= task.cpuRequirement ?? 0;
+        assignments.push({ taskId: task.id, processorId: proc.id, cpuRequirement: task.cpuRequirement ?? 0 });
+      }
+    }
+  } else if (mode === "bestfit") {
+    // Best-fit decreasing: sort tasks by cpu desc then pick processor leaving smallest leftover >= 0
+    const tasksSorted = tasksCopy.slice().sort((a, b) => (b.cpuRequirement ?? 0) - (a.cpuRequirement ?? 0));
+    for (const task of tasksSorted) {
+      let best = null;
+      let bestLeft = Infinity;
+      for (const p of procs) {
+        const left = (p.available ?? 0) - (task.cpuRequirement ?? 0);
+        if (left >= 0 && left < bestLeft) {
+          bestLeft = left;
+          best = p;
+        }
+      }
+      if (best) {
+        best.available -= task.cpuRequirement ?? 0;
+        assignments.push({ taskId: task.id, processorId: best.id, cpuRequirement: task.cpuRequirement ?? 0 });
+      }
+    }
+  }
+
+  const energy = computeEnergy(assignments);
+  const throughput = Math.round(assignments.length * 10); // arbitrary scale
+  const utilizations = (processorsInput.length > 0)
+    ? processorsInput.map(p => {
+        const assigned = assignments.filter(a => a.processorId === p.id).reduce((s, a) => s + a.cpuRequirement, 0);
+        const used = (p.utilization ?? 0) + assigned;
+        return Math.min(100, Math.round(used));
+      })
+    : [];
+
+  const avgUtil = utilizations.length ? Math.round(utilizations.reduce((s, v) => s + v, 0) / utilizations.length) : 0;
+  const stdDev = utilizations.length
+    ? Math.round(Math.sqrt(utilizations.reduce((s, v) => s + Math.pow(v - avgUtil, 2), 0) / utilizations.length))
+    : 0;
+  const efficiency = Math.max(0, Math.min(100, 100 - stdDev));
+
+  return { energy, throughput, efficiency, assignments, utilizations };
+};
+
+// Endpoint to compare greedy vs optimization heuristics (best-fit)
+app.get('/algorithms/compare', (req, res) => {
+  try {
+    const greedy = simulateAllocation(tasks, processors, 'greedy');
+    const opt = simulateAllocation(tasks, processors, 'bestfit');
+    res.json({ data: [ { algorithm: 'Greedy', ...greedy }, { algorithm: 'Optimization', ...opt } ] });
+  } catch (err) {
+    console.error('Failed to run algorithm comparison', err);
+    res.status(500).json({ error: 'comparison_failed' });
+  }
+});
+
 const emitUpdate = (event, payload) => {
   io.emit(event, payload);
 };

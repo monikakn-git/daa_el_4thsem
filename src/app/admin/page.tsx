@@ -167,7 +167,7 @@ export default function AdminPage() {
                       <td className="px-4 py-4 align-top text-white font-medium">{contact.name}</td>
                       <td className="px-4 py-4 align-top text-gray-300">{contact.email}</td>
                       <td className="px-4 py-4 align-top text-gray-300">{contact.subject}</td>
-                      <td className="px-4 py-4 align-top text-gray-300 max-w-xl break-words">{contact.message}</td>
+                      <td className="px-4 py-4 align-top text-gray-300 max-w-xl wrap-break-word">{contact.message}</td>
                       <td className="px-4 py-4 align-top text-gray-400 text-sm">{new Date(contact.receivedAt).toLocaleString()}</td>
                     </tr>
                   ))}

@@ -1,19 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { ArrowRight, Activity, Zap, Cpu, Server } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { HeroScene } from "@/components/home/HeroScene";
 import { AnimatedButton } from "@/components/ui/AnimatedButton";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { AnimatedCounter } from "@/components/home/AnimatedCounter";
 
-const stats = [
-  { label: "Energy Saved (kWh)", value: 145920, icon: Zap, color: "text-brand-emerald" },
-  { label: "Tasks Scheduled", value: 894302, icon: Activity, color: "text-brand-neon" },
-  { label: "Active Processors", value: 1024, icon: Cpu, color: "text-brand-cyan" },
-  { label: "Resource Utilization", value: 98, icon: Server, color: "text-purple-400", suffix: "%" },
-];
+const HeroScene = dynamic(
+  () => import("@/components/home/HeroScene").then((mod) => mod.HeroScene),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="absolute inset-0 bg-brand-dark pointer-events-none" />
+    ),
+  }
+);
 
 export default function HomePage() {
   return (
@@ -60,34 +61,6 @@ export default function HomePage() {
               </Link>
             </div>
           </motion.div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 relative z-10 bg-brand-dark">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <GlassCard glowColor="neon" className="flex flex-col items-center text-center">
-                  <stat.icon className={`w-10 h-10 mb-4 ${stat.color}`} />
-                  <div className="text-4xl font-bold text-white mb-2 font-mono flex items-center">
-                    <AnimatedCounter value={stat.value} duration={2.5} />
-                    {stat.suffix && <span>{stat.suffix}</span>}
-                  </div>
-                  <div className="text-sm text-gray-400 uppercase tracking-wider font-medium">
-                    {stat.label}
-                  </div>
-                </GlassCard>
-              </motion.div>
-            ))}
-          </div>
         </div>
       </section>
       

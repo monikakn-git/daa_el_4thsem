@@ -132,11 +132,11 @@ export default function DashboardPage() {
 
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <GlassCard className="col-span-1 h-[400px] flex flex-col">
+          <GlassCard className="col-span-1 h-100 flex flex-col">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Activity className="w-5 h-5 text-brand-neon" /> Throughput Analysis
             </h3>
-            <div className="flex-grow w-full min-h-[300px] min-w-0">
+            <div className="grow w-full min-h-75 min-w-0">
               <ResponsiveContainer width="100%" height={320}>
                 <AreaChart data={performanceData}>
                   <defs>
@@ -158,11 +158,11 @@ export default function DashboardPage() {
             </div>
           </GlassCard>
 
-          <GlassCard className="col-span-1 h-[400px] flex flex-col">
+          <GlassCard className="col-span-1 h-100 flex flex-col">
             <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
               <Zap className="w-5 h-5 text-brand-emerald" /> Energy Consumption (Watts)
             </h3>
-            <div className="flex-grow w-full min-h-[300px] min-w-0">
+            <div className="grow w-full min-h-75 min-w-0">
               <ResponsiveContainer width="100%" height={320}>
                 <LineChart data={performanceData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#ffffff10" vertical={false} />

@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} dark antialiased`}>
-      <body className="min-h-screen bg-[#050505] text-white overflow-x-hidden selection:bg-brand-neon selection:text-black">
+      <body className="min-h-screen bg-brand-dark text-white overflow-x-hidden selection:bg-brand-neon selection:text-black">
         <Navbar />
         <main className="pt-20">
           {children}

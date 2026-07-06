@@ -18,8 +18,6 @@ const navLinks = [
   { name: "Analytics", path: "/analytics" },
   { name: "Performance", path: "/performance" },
   { name: "Docs", path: "/documentation" },
-  { name: "Team", path: "/team" },
-  { name: "Contact", path: "/contact" },
   { name: "Admin", path: "/admin" },
 ];
 
@@ -72,11 +70,7 @@ export function Navbar() {
                   )}
                 >
                   {isActive && (
-                    <motion.div
-                      layoutId="navbar-indicator"
-                      className="absolute inset-0 bg-brand-neon/10 border border-brand-neon/30 rounded-md"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
+                    <span className="absolute inset-0 bg-brand-neon/10 border border-brand-neon/30 rounded-md" />
                   )}
                   <span className="relative z-10">{link.name}</span>
                 </Link>
